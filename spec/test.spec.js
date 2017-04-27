@@ -10,6 +10,10 @@ function base64Encode(str) {
   return new Buffer(str).toString("base64");
 }
 
+function resp() {
+  return httpMocks.createResponse();
+}
+
 describe("validateClientId", () => {
 
   it("accepts expected", () => {
@@ -26,10 +30,6 @@ describe("validateClientId", () => {
 });
 
 describe("validateAuthorizationHeader", () => {
-
-  function resp() {
-    return httpMocks.createResponse();
-  }
 
   it("is false if doesn't start with 'Basic'", () => {
     expect(sut.validateAuthorizationHeader("asd")).toBe(false);
@@ -55,6 +55,42 @@ describe("validateAuthorizationHeader", () => {
   it("returns false if the 2nd segment is not the expected client secret", () => {
     const header = "Basic " + base64Encode(sut.EXPECTED_CLIENT_ID + ":asd");
     expect(sut.validateAuthorizationHeader(header)).toBe(false);
+  });
+
+});
+
+describe("validateAuthRequest", () => {
+
+  function createRequest(query) {
+    return httpMocks.createRequest({
+      method: "GET",
+      url: "/o/oauth2/v2/auth",
+      query: query
+    });
+  }
+
+  it("requires a valid client id", () => {
+    const request = createRequest({
+      client_id: "something invalid",
+      response_type: "code"
+    });
+    expect(sut.validateAuthRequest(request, resp())).toBe(false);
+  });
+
+  it("requires response_type=code", () => {
+    const request = createRequest({
+      client_id: sut.EXPECTED_CLIENT_ID,
+      response_type: "something else"
+    });
+    expect(sut.validateAuthRequest(request, resp())).toBe(false);
+  });
+
+  it("is true for valid request", () => {
+    const request = createRequest({
+      client_id : sut.EXPECTED_CLIENT_ID,
+      response_type: "code"
+    });
+    expect(sut.validateAuthRequest(request, resp())).toBe(true);
   });
 
 });

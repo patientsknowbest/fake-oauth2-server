@@ -6,38 +6,7 @@ const _ = require("underscore");
 const session = require("express-session");
 const randomstring = require("randomstring");
 
-
-const ui = _.template(`
-<html>
-<head>
-    
-    <title>Fake Google OAuth2 (and maybe other services)</title>
-</head>
-<body>
-    <h1>Fake Google OAuth2 (and maybe other services)</h1>
-    <h2>Request parameters:</h2>
-    <table>
-        <tr>
-            <td>redirect_uri:</td>
-            <td><%- query.redirect_uri  %></td>
-        </tr>
-        <tr>
-            <td>client_id:</td>
-            <td><%- query.client_id  %></td>
-        </tr>
-        <tr>
-            <td>response_type:</td>
-            <td><%- query.response_type  %></td>
-        </tr>
-    </table>
-    <h2>Log in as...</h2>
-    <form action="/login-as">
-        <input type="email" placeholder="you@patientsknowbest.com" name="email" />
-        <input type="submit" value="generate token"
-    </form>
-</body>
-<html>
-`);
+const ui = _.template(fs.readFileSync("./input.html").toString());
 
 // App
 const app = express();
@@ -63,7 +32,16 @@ function validateClientId(actualClientId, res) {
 
 function validateAuthRequest(req, res) {
   const actualClientId = req.query.client_id;
-  return validateClientId(actualClientId, res);
+  if (validateClientId(actualClientId, res)) {
+    if (req.query.response_type !== "code") {
+      res.writeHead(401, {
+        "X-Debug": errorMsg("response_type", "code", req.query.response_type)
+      });
+      return false;
+    }
+    return true;
+  }
+  return false;
 }
 
 function validateAuthorizationHeader(header, res) {
@@ -145,7 +123,7 @@ app.get("/o/oauth2/v2/auth", (req, res) => {
 });
 
 app.get("/login-as", (req, res) => {
-  const code = createToken();
+  const code = createToken(req.query.email, req.query.expires_in);
   var location = req.session.redirect_uri + "?code=" + code;
   if (req.session.state) {
     location += "&state=" + req.session.state;
@@ -175,6 +153,7 @@ module.exports = {
   validateClientId: validateClientId,
   validateAccessTokenRequest: validateAccessTokenRequest,
   validateAuthorizationHeader: validateAuthorizationHeader,
+  validateAuthRequest: validateAuthRequest,
   EXPECTED_CLIENT_ID: EXPECTED_CLIENT_ID,
   EXPECTED_CLIENT_SECRET: EXPECTED_CLIENT_SECRET
 };
