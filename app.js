@@ -12,8 +12,12 @@ const ui = _.template(fs.readFileSync("./input.html").toString());
 const app = express();
 const code2token = {};
 
-const EXPECTED_CLIENT_ID = "dummy-client-id";
-const EXPECTED_CLIENT_SECRET = "dummy-client-secret";
+const EXPECTED_CLIENT_ID = process.env.EXPECTED_CLIENT_ID || "dummy-client-id";
+const EXPECTED_CLIENT_SECRET = process.env.EXPECTED_CLIENT_SECRET || "dummy-client-secret";
+
+function now() {
+  return Math.round(new Date().valueOf() / 1000);
+}
 
 function errorMsg(descr, expected, actual) {
   return "expected " + descr + ": " + expected + ", actual: " + actual;

@@ -12,18 +12,12 @@
             <h1>Fake OAuth2 Server</h1>
             <h2>Request parameters:</h2>
             <table class="table table-striped">
-                <tr>
-                    <td>redirect_uri:</td>
-                    <td><%- query.redirect_uri %></td>
-                </tr>
-                <tr>
-                    <td>client_id:</td>
-                    <td><%- query.client_id %></td>
-                </tr>
-                <tr>
-                    <td>response_type:</td>
-                    <td><%- query.response_type %></td>
-                </tr>
+                <% _.each(query, (val, name) => { %>
+                    <tr>
+                        <td><%- name %></td>
+                        <td><%- val %></td>
+                    </tr>
+                <% }); %>
             </table>
             <h2>Create token & grant access</h2>
             <form action="/login-as">
