@@ -1,0 +1,21 @@
+{
+  "name": "fake-googleoauth2",
+  "version": "0.0.1",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "jasmine"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.15.2",
+    "express-session": "^1.15.2",
+    "randomstring": "^1.1.5",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "jasmine": "^2.6.0",
+    "node-mocks-http": "^1.6.1"
+  }
+}
