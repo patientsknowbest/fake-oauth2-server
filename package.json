@@ -1,12 +1,12 @@
 {
-  "name": "fake-googleoauth2",
+  "name": "fake-oauth2-server",
   "version": "0.0.1",
   "description": "",
   "main": "server.js",
   "scripts": {
     "test": "jasmine"
   },
-  "author": "",
+  "author": "Bence Eros <ebence88@gmail.com>",
   "license": "ISC",
   "dependencies": {
     "express": "^4.15.2",
