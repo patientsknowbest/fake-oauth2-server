@@ -1,5 +1,4 @@
-Fake OAuth2
-===========
+# Fake OAuth2
 
 This project is an OAuth2 server implementation for testing purposes. See [RFC 6749](https://tools.ietf.org/html/rfc6749) .  
 
@@ -8,3 +7,19 @@ In this context the subject under testing is your client application and this pr
 which your application is supposed to use. By testing I mean automated end-to-end testing or manual testing, not unit testing.
 
 Currently under development.
+
+## Building & running
+
+ - clone this repo
+ - run `npm install`
+ - start the server using `node server.js`
+ - you can run the unittests using `npm test`
+ 
+## Configuration
+
+The application can be configured using *environment variables* before executing `node server.js` .
+
+List of environment variables:
+
+|Variable name|Default value|Description|
+|--------------|------------|----------|
