@@ -14,6 +14,28 @@ function resp() {
   return httpMocks.createResponse();
 }
 
+function authRequest(query) {
+  return httpMocks.createRequest({
+    method: "GET",
+    url: "/o/oauth2/v2/auth",
+    query: query
+  });
+}
+
+function accessTokenRequest(query = {
+  client_id: sut.EXPECTED_CLIENT_ID,
+  grant_type: "authorization_code"
+}, headers = {
+  "Authorization": "Basic " + base64Encode(sut.EXPECTED_CLIENT_ID + ":" + sut.EXPECTED_CLIENT_SECRET)
+}) {
+  return httpMocks.createRequest({
+    method: "GET",
+    url: "/oauth2/v4/token",
+    query: query,
+    headers: headers
+  });
+}
+
 describe("validateClientId", () => {
 
   it("accepts expected", () => {
@@ -21,7 +43,7 @@ describe("validateClientId", () => {
     expect(sut.validateClientId(sut.EXPECTED_CLIENT_ID, res)).toBe(true);
   });
 
-  it("refuses others", ()  => {
+  it("refuses others", () => {
     const res = httpMocks.createResponse();
     expect(sut.validateClientId("something else", res)).toBe(false);
     expect(res.statusCode).toBe(400);
@@ -58,19 +80,11 @@ describe("validateAuthorizationHeader", () => {
   });
 
 });
-
 describe("validateAuthRequest", () => {
 
-  function createRequest(query) {
-    return httpMocks.createRequest({
-      method: "GET",
-      url: "/o/oauth2/v2/auth",
-      query: query
-    });
-  }
 
   it("requires a valid client id", () => {
-    const request = createRequest({
+    const request = authRequest({
       client_id: "something invalid",
       response_type: "code"
     });
@@ -78,17 +92,35 @@ describe("validateAuthRequest", () => {
   });
 
   it("requires response_type=code", () => {
-    const request = createRequest({
+    const request = authRequest({
       client_id: sut.EXPECTED_CLIENT_ID,
       response_type: "something else"
     });
     expect(sut.validateAuthRequest(request, resp())).toBe(false);
   });
 
-  it("is true for valid request", () => {
-    const request = createRequest({
-      client_id : sut.EXPECTED_CLIENT_ID,
+  it("requires the redirect URI to be valid", () => {
+    const request = authRequest({
+      client_id: sut.EXPECTED_CLIENT_ID,
+      response_type: "code",
+      redirect_uri: "http://x.y.z"
+    });
+    expect(sut.validateAuthRequest(request, resp())).toBe(false);
+  });
+
+  it("is true for valid request without redirect_uri", () => {
+    const request = authRequest({
+      client_id: sut.EXPECTED_CLIENT_ID,
       response_type: "code"
+    });
+    expect(sut.validateAuthRequest(request, resp())).toBe(true);
+  });
+
+  it("is true for valid request with redirect_uri", () => {
+    const request = authRequest({
+      client_id: sut.EXPECTED_CLIENT_ID,
+      response_type: "code",
+      redirect_uri: "http://localhost:8181/auth/login"
     });
     expect(sut.validateAuthRequest(request, resp())).toBe(true);
   });
@@ -97,38 +129,20 @@ describe("validateAuthRequest", () => {
 
 describe("validateAccessTokenRequest", () => {
 
-    it("accepts expected client_id and client_secret", () => {
-      const base64EncodedAuthCode = base64Encode(sut.EXPECTED_CLIENT_ID + ":" + sut.EXPECTED_CLIENT_SECRET);
-      const request = httpMocks.createRequest({
-        method: "GET",
-        url: "/oauth2/v4/token",
-        query: {
-          client_id : sut.EXPECTED_CLIENT_ID,
-          grant_type : "authorization_code"
-        },
-        headers: {
-          "Authorization" : "Basic " + base64EncodedAuthCode
-        }
-      });
-      expect(sut.validateAccessTokenRequest(request, httpMocks.createResponse())).toBe(true);
-    });
+  it("accepts expected client_id and client_secret", () => {
+    const base64EncodedAuthCode = base64Encode(sut.EXPECTED_CLIENT_ID + ":" + sut.EXPECTED_CLIENT_SECRET);
+    const request = accessTokenRequest();
+    expect(sut.validateAccessTokenRequest(request, httpMocks.createResponse())).toBe(true);
+  });
 
-    it("is false for invalid authorization header", () => {
-      const base64EncodedAuthCode = base64Encode(sut.EXPECTED_CLIENT_ID + ":wrOOOONGG!!");
-      const request = httpMocks.createRequest({
-        method: "GET",
-        url: "/oauth2/v4/token",
-        query: {
-          client_id : sut.EXPECTED_CLIENT_ID,
-          grant_type : "authorization_code"
-        },
-        headers: {
-          "Authorization" : "Basic " + base64EncodedAuthCode
-        }
-      });
-      const res = httpMocks.createResponse();
-      expect(sut.validateAccessTokenRequest(request, res)).toBe(false);
+  it("is false for invalid authorization header", () => {
+    const base64EncodedAuthCode = base64Encode(sut.EXPECTED_CLIENT_ID + ":wrOOOONGG!!");
+    const request = accessTokenRequest({client_id: sut.EXPECTED_CLIENT_ID, grant_type: "authorization_code"},
+      {"Authorization": "Basic " + base64EncodedAuthCode});
+    const res = httpMocks.createResponse();
 
-      expect(res.statusCode).toBe(401);
-    });
+    expect(sut.validateAccessTokenRequest(request, res)).toBe(false);
+    expect(res.statusCode).toBe(401);
+  });
 });
+

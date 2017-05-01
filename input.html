@@ -22,7 +22,11 @@
             <h2>Create token & grant access</h2>
             <form action="/login-as">
                 <div class="form-group">
-                    <label for="email">Email of the resource owner: </label>
+                    <label for="name">Name of the resource owner (optional): </label>
+                    <input name="name" id="name" class="form-control"/>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email of the resource owner (optional): </label>
                     <input type="email" class="form-control" placeholder="you@gmail.com"
                            name="email" id="email"/>
                     <p class="help-block">Enter the email address of the person you want to impersonate.</p>

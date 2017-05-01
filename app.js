@@ -10,10 +10,17 @@ const ui = _.template(fs.readFileSync("./input.html").toString());
 
 // App
 const app = express();
-const code2token = {};
 
 const EXPECTED_CLIENT_ID = process.env.EXPECTED_CLIENT_ID || "dummy-client-id";
 const EXPECTED_CLIENT_SECRET = process.env.EXPECTED_CLIENT_SECRET || "dummy-client-secret";
+const AUTH_REQUEST_PATH = process.env.AUTH_REQUEST_PATH || "/o/oauth2/v2/auth";
+const ACCESS_TOKEN_REQUEST_PATH = process.env.ACCESS_TOKEN_REQUEST_PATH || "/oauth2/v4/token";
+const TOKENINFO_REQUEST_URL = process.env.TOKENINFO_REQUEST_URL || "/oauth2/v3/tokeninfo/:id_token";
+const PERMITTED_REDIRECT_URLS = process.env.PERMITTED_REDIRECT_URLS ? process.env.PERMITTED_REDIRECT_URLS.split(",") : ["http://localhost:8181/auth/login"];
+
+const code2token = {};
+const id_token2persondata = {};
+
 
 function now() {
   return Math.round(new Date().valueOf() / 1000);
@@ -41,6 +48,9 @@ function validateAuthRequest(req, res) {
       res.writeHead(401, {
         "X-Debug": errorMsg("response_type", "code", req.query.response_type)
       });
+      return false;
+    }
+    if (req.query.redirect_uri && ! _.contains(PERMITTED_REDIRECT_URLS, req.query.redirect_uri)) {
       return false;
     }
     return true;
@@ -95,16 +105,24 @@ function validateAccessTokenRequest(req, res) {
   return success;
 }
 
-function createToken() {
+function createToken(name, email, expires_in) {
   const code = "C-" + randomstring.generate(3);
   const accesstoken = "ACCT-" + randomstring.generate(6);
   const refreshtoken = "REFT-" + randomstring.generate(6);
-  code2token[code] = {
+  const id_token = "IDT-" + randomstring.generate(6);
+  const token = {
     access_token: accesstoken,
-    expires_in: 3600,
-    refresh_token: refreshtoken
+    expires_in: expires_in,
+    refresh_token: refreshtoken,
+    id_token: id_token
   };
-  return code;
+  id_token2persondata[id_token] = {
+    email: req.query.email,
+    email_verified: true,
+    name: name
+  }
+  code2token[code] = token;
+  return token;
 }
 
 app.use(session({
@@ -114,7 +132,7 @@ app.use(session({
   cookie: {secure: false}
 }))
 
-app.get("/o/oauth2/v2/auth", (req, res) => {
+app.get(AUTH_REQUEST_PATH, (req, res) => {
   if (validateAuthRequest(req, res)) {
     req.session.redirect_uri = req.query.redirect_uri;
     if (req.query.state) {
@@ -127,7 +145,8 @@ app.get("/o/oauth2/v2/auth", (req, res) => {
 });
 
 app.get("/login-as", (req, res) => {
-  const code = createToken(req.query.email, req.query.expires_in);
+  const token = createToken(req.name, req.query.email, req.query.expires_in);
+  const code = token.code;
   var location = req.session.redirect_uri + "?code=" + code;
   if (req.session.state) {
     location += "&state=" + req.session.state;
@@ -136,7 +155,7 @@ app.get("/login-as", (req, res) => {
   res.end();
 });
 
-app.get("/oauth2/v4/token", (req, res) => {
+app.get(ACCESS_TOKEN_REQUEST_PATH, (req, res) => {
   if (validateAccessTokenRequest(req, res)) {
     const code = req.query.code;
     const token = code2token[code];
@@ -147,8 +166,16 @@ app.get("/oauth2/v4/token", (req, res) => {
   }
 });
 
-app.get("/oauth2/v3/tokeninfo", (req, res) => {
-
+app.get(TOKENINFO_REQUEST_URL, (req, res) => {
+  const id_token = req.query.id_token;
+  res.send({
+      "email": "bence@patientsknowbest.com",
+      "email_verified": "true",
+      "name": "Bence Eros",
+      "given_name": "Bence",
+      "family_name": "Eros",
+  });
+  res.end();
 });
 
 
