@@ -5,6 +5,7 @@
 
 const sut = require("../app");
 const httpMocks = require("node-mocks-http");
+const fetch = require("node-fetch");
 
 function base64Encode(str) {
   return new Buffer(str).toString("base64");
@@ -145,4 +146,3 @@ describe("validateAccessTokenRequest", () => {
     expect(res.statusCode).toBe(401);
   });
 });
-

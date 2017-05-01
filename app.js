@@ -15,7 +15,7 @@ const EXPECTED_CLIENT_ID = process.env.EXPECTED_CLIENT_ID || "dummy-client-id";
 const EXPECTED_CLIENT_SECRET = process.env.EXPECTED_CLIENT_SECRET || "dummy-client-secret";
 const AUTH_REQUEST_PATH = process.env.AUTH_REQUEST_PATH || "/o/oauth2/v2/auth";
 const ACCESS_TOKEN_REQUEST_PATH = process.env.ACCESS_TOKEN_REQUEST_PATH || "/oauth2/v4/token";
-const TOKENINFO_REQUEST_URL = process.env.TOKENINFO_REQUEST_URL || "/oauth2/v3/tokeninfo/:id_token";
+const TOKENINFO_REQUEST_URL = process.env.TOKENINFO_REQUEST_URL || "/oauth2/v3/tokeninfo";
 const PERMITTED_REDIRECT_URLS = process.env.PERMITTED_REDIRECT_URLS ? process.env.PERMITTED_REDIRECT_URLS.split(",") : ["http://localhost:8181/auth/login"];
 
 const code2token = {};
@@ -117,12 +117,12 @@ function createToken(name, email, expires_in) {
     id_token: id_token
   };
   id_token2persondata[id_token] = {
-    email: req.query.email,
+    email: email,
     email_verified: true,
     name: name
-  }
+  };
   code2token[code] = token;
-  return token;
+  return code;
 }
 
 app.use(session({
@@ -141,12 +141,14 @@ app.get(AUTH_REQUEST_PATH, (req, res) => {
     res.send(ui({
       query: req.query
     }));
+  } else {
+
   }
+  res.end();
 });
 
 app.get("/login-as", (req, res) => {
-  const token = createToken(req.name, req.query.email, req.query.expires_in);
-  const code = token.code;
+  const code = createToken(req.query.name, req.query.email, req.query.expires_in);
   var location = req.session.redirect_uri + "?code=" + code;
   if (req.session.state) {
     location += "&state=" + req.session.state;
@@ -168,13 +170,12 @@ app.get(ACCESS_TOKEN_REQUEST_PATH, (req, res) => {
 
 app.get(TOKENINFO_REQUEST_URL, (req, res) => {
   const id_token = req.query.id_token;
-  res.send({
-      "email": "bence@patientsknowbest.com",
-      "email_verified": "true",
-      "name": "Bence Eros",
-      "given_name": "Bence",
-      "family_name": "Eros",
-  });
+  const token_info = id_token2persondata[id_token];
+  if (token_info !== undefined) {
+    res.send(token_info);
+  } else {
+    res.status(404);
+  }
   res.end();
 });
 
@@ -186,5 +187,8 @@ module.exports = {
   validateAuthorizationHeader: validateAuthorizationHeader,
   validateAuthRequest: validateAuthRequest,
   EXPECTED_CLIENT_ID: EXPECTED_CLIENT_ID,
-  EXPECTED_CLIENT_SECRET: EXPECTED_CLIENT_SECRET
+  EXPECTED_CLIENT_SECRET: EXPECTED_CLIENT_SECRET,
+  AUTH_REQUEST_PATH : AUTH_REQUEST_PATH,
+  ACCESS_TOKEN_REQUEST_PATH : ACCESS_TOKEN_REQUEST_PATH,
+  PERMITTED_REDIRECT_URLS : PERMITTED_REDIRECT_URLS
 };
