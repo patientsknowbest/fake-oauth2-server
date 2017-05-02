@@ -9,8 +9,10 @@
   "author": "Bence Eros <ebence88@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.17.1",
     "express": "^4.15.2",
     "express-session": "^1.15.2",
+    "morgan": "^1.8.1",
     "randomstring": "^1.1.5",
     "underscore": "^1.8.3"
   },
