@@ -19,10 +19,12 @@ const EXPECTED_CLIENT_SECRET = process.env.EXPECTED_CLIENT_SECRET || "dummy-clie
 const AUTH_REQUEST_PATH = process.env.AUTH_REQUEST_PATH || "/o/oauth2/v2/auth";
 const ACCESS_TOKEN_REQUEST_PATH = process.env.ACCESS_TOKEN_REQUEST_PATH || "/oauth2/v4/token";
 const USERINFO_REQUEST_URL = process.env.TOKENINFO_REQUEST_URL || "/oauth2/v3/userinfo";
+const TOKENINFO_REQUEST_URL = process.env.TOKENINFO_REQUEST_URL || "/oauth2/v3/tokeninfo";
 const PERMITTED_REDIRECT_URLS = process.env.PERMITTED_REDIRECT_URLS ? process.env.PERMITTED_REDIRECT_URLS.split(",") : ["http://localhost:8181/auth/login"];
 
 const code2token = {};
-const id_token2persondata = {};
+const authHeader2personData = {};
+const id_token2personData = {};
 
 
 function now() {
@@ -92,7 +94,6 @@ function validateAuthorizationHeader(header, res) {
 }
 
 function validateAccessTokenRequest(req, res) {
-  console.log("validating access token request with req.body = ", req.body);
   let success = true, msg;
   if (req.body.grant_type !== "authorization_code") {
     success = false;
@@ -135,7 +136,7 @@ function createToken(name, email, expires_in, client_state) {
     state: client_state,
     token_type: "Bearer"
   };
-  id_token2persondata["Bearer " + accesstoken] = {
+  id_token2personData[id_token] = authHeader2personData["Bearer " + accesstoken] = {
     email: email,
     email_verified: true,
     name: name
@@ -189,13 +190,18 @@ app.post(ACCESS_TOKEN_REQUEST_PATH, (req, res) => {
 });
 
 app.get(USERINFO_REQUEST_URL, (req, res) => {
-  const token_info = id_token2persondata[req.headers["authorization"]];
+  const token_info = authHeader2personData[req.headers["authorization"]];
   if (token_info !== undefined) {
+    console.log("userinfo response", token_info);
     res.send(token_info);
   } else {
     res.status(404);
   }
   res.end();
+});
+
+app.get(TOKENINFO_REQUEST_URL, (req, res) => {
+  const token_info = id_token2personData[req.query.id_token];
 });
 
 

@@ -23,8 +23,9 @@ function authRequest(query) {
   });
 }
 
-function accessTokenRequest(query = {
+function accessTokenRequest(body = {
   client_id: sut.EXPECTED_CLIENT_ID,
+  client_secret: sut.EXPECTED_CLIENT_SECRET,
   grant_type: "authorization_code"
 }, headers = {
   "Authorization": "Basic " + base64Encode(sut.EXPECTED_CLIENT_ID + ":" + sut.EXPECTED_CLIENT_SECRET)
@@ -32,8 +33,8 @@ function accessTokenRequest(query = {
   return httpMocks.createRequest({
     method: "GET",
     url: "/oauth2/v4/token",
-    query: query,
-    headers: headers
+    headers: headers,
+    body: body
   });
 }
 
