@@ -201,7 +201,19 @@ app.get(USERINFO_REQUEST_URL, (req, res) => {
 });
 
 app.get(TOKENINFO_REQUEST_URL, (req, res) => {
+  if (req.query.id_token == null) {
+      res.status(400)
+      res.send("missing id_token query parameter");
+  }
   const token_info = id_token2personData[req.query.id_token];
+  if (token_info !== undefined) {
+      res.status(200);
+    res.send(token_info);
+  } else {
+    res.status(404);
+    res.send("token not found by id_token " + req.query.id_token);
+  }
+  res.end();
 });
 
 
