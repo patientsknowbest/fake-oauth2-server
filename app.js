@@ -207,7 +207,7 @@ app.get(TOKENINFO_REQUEST_URL, (req, res) => {
   }
   const token_info = id_token2personData[req.query.id_token];
   if (token_info !== undefined) {
-      res.status(200);
+    res.status(200);
     res.send(token_info);
   } else {
     res.status(404);
