@@ -113,6 +113,10 @@ function validateAccessTokenRequest(req, res) {
     success = false;
     msg = errorMsg("client_secret", EXPECTED_CLIENT_SECRET, req.body.client_secret);
   }
+  if (req.session.redirect_uri !== req.body.redirect_uri) {
+    success = false;
+    msg = errorMsg("redirect_uri", req.session.redirect_uri, req.body.redirect_uri);
+  }
   if (!success) {
     const params = {};
     if (msg) {
@@ -152,7 +156,7 @@ app.use(session({
   cookie: {secure: false}
 }))
 
-app.get(AUTH_REQUEST_PATH, (req, res) => {
+function authRequestHandler(req, res) {
   if (validateAuthRequest(req, res)) {
     req.session.redirect_uri = req.query.redirect_uri;
     if (req.query.state) {
@@ -165,7 +169,9 @@ app.get(AUTH_REQUEST_PATH, (req, res) => {
 
   }
   res.end();
-});
+}
+
+app.get(AUTH_REQUEST_PATH, authRequestHandler);
 
 app.get("/login-as", (req, res) => {
   const code = createToken(req.query.name, req.query.email, req.query.expires_in, req.session.client_state);
@@ -223,6 +229,7 @@ module.exports = {
   validateAccessTokenRequest: validateAccessTokenRequest,
   validateAuthorizationHeader: validateAuthorizationHeader,
   validateAuthRequest: validateAuthRequest,
+  authRequestHandler: authRequestHandler,
   EXPECTED_CLIENT_ID: EXPECTED_CLIENT_ID,
   EXPECTED_CLIENT_SECRET: EXPECTED_CLIENT_SECRET,
   AUTH_REQUEST_PATH : AUTH_REQUEST_PATH,
