@@ -9,4 +9,4 @@ ADD package.json package.json
 ADD package-lock.json package-lock.json
 RUN npm install
 EXPOSE 8282
-ENTRYPOINT ["node" , "/opt/fake-oauth2-server/server.js" ]
+ENTRYPOINT ["npm" , "start" ]
