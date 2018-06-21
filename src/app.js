@@ -6,7 +6,7 @@ const session = require('express-session')
 const randomstring = require('randomstring')
 const bodyParser = require('body-parser')
 
-const ui = _.template(fs.readFileSync('./input.html').toString())
+const ui = _.template(fs.readFileSync('./src/input.html').toString())
 
 const app = express()
 app.use(
