@@ -1,6 +1,6 @@
 {
   "name": "fake-oauth2-server",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "An OAuth2 server implementation to be used for testing",
   "main": "src/server.js",
   "engines": {
