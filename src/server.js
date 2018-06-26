@@ -15,7 +15,16 @@ console.log('\tauthorization endpoint: ' + app.AUTH_REQUEST_PATH)
 console.log('\taccess token endpoint: ' + app.ACCESS_TOKEN_REQUEST_PATH)
 console.log('\tredirect URLs: ' + app.permittedRedirectURLs())
 
-process.on('SIGTERM', function() {
+const instruction = `http://localhost:${PORT}${
+  app.AUTH_REQUEST_PATH
+}?redirect_uri=${app.PERMITTED_REDIRECT_URLS[0]}&client_id=${
+  app.EXPECTED_CLIENT_ID
+}&response_type=code`
+
+console.log('Start here:', instruction)
+console.log('Ensure something is running at:', app.PERMITTED_REDIRECT_URLS[0])
+
+process.on('SIGTERM', () => {
   server.close(() => {
     process.exit(0)
   })
