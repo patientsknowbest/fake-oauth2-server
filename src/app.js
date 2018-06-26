@@ -184,6 +184,8 @@ const authRequestHandler = (req, res) => {
   res.end()
 }
 
+// start here
+// http://localhost:8282/o/oauth2/v2/auth?redirect_uri=http://localhost:8181/auth/login&client_id=dummy-client-id&response_type=code
 app.get(AUTH_REQUEST_PATH, authRequestHandler)
 
 app.get('/login-as', (req, res) => {
@@ -239,16 +241,16 @@ app.get(TOKENINFO_REQUEST_URL, (req, res) => {
 })
 
 module.exports = {
-  app: app,
-  validateClientId: validateClientId,
-  validateAccessTokenRequest: validateAccessTokenRequest,
-  validateAuthorizationHeader: validateAuthorizationHeader,
-  validateAuthRequest: validateAuthRequest,
-  authRequestHandler: authRequestHandler,
-  EXPECTED_CLIENT_ID: EXPECTED_CLIENT_ID,
-  EXPECTED_CLIENT_SECRET: EXPECTED_CLIENT_SECRET,
-  AUTH_REQUEST_PATH: AUTH_REQUEST_PATH,
-  ACCESS_TOKEN_REQUEST_PATH: ACCESS_TOKEN_REQUEST_PATH,
-  PERMITTED_REDIRECT_URLS: PERMITTED_REDIRECT_URLS,
-  permittedRedirectURLs: permittedRedirectURLs
+  app,
+  validateClientId,
+  validateAccessTokenRequest,
+  validateAuthorizationHeader,
+  validateAuthRequest,
+  authRequestHandler,
+  EXPECTED_CLIENT_ID,
+  EXPECTED_CLIENT_SECRET,
+  AUTH_REQUEST_PATH,
+  ACCESS_TOKEN_REQUEST_PATH,
+  PERMITTED_REDIRECT_URLS,
+  permittedRedirectURLs
 }
