@@ -38,6 +38,25 @@ const PERMITTED_REDIRECT_URLS = process.env.PERMITTED_REDIRECT_URLS
   ? process.env.PERMITTED_REDIRECT_URLS.split(',')
   : ['http://localhost:8181/auth/login']
 
+const SCOPES = process.env.SCOPES ? process.env.SCOPES.split(',') : []
+
+const MATCH_SCOPE = process.env.MATCH_SCOPE
+  ? process.env.MATCH_SCOPE.split(',').reduce((acc, elem) => {
+      const [email, scope] = elem.split(':')
+      acc[email] = scope
+      return acc
+    }, {})
+  : {}
+
+const getScope = email => {
+  if (SCOPES.length === 0) return null
+  const sKeys = Object.keys(MATCH_SCOPE)
+  if (sKeys.length === 0) return SCOPES[0]
+  const found = sKeys.find(key => email.includes(key))
+  if (!found) return SCOPES[0]
+  return MATCH_SCOPE[found]
+}
+
 const code2token = {}
 const authHeader2personData = {}
 const token2personData = {}
@@ -109,6 +128,7 @@ const validateAccessTokenRequest = (req, res) => {
   if (req.body.grant_type !== 'authorization_code') {
     success = false
     msg = errorMsg('grant_type', 'authorization_code', req.body.grant_type)
+    console.log(msg)
   }
 
   if (!validateClientId(req.body.client_id, res)) success = false
@@ -140,7 +160,7 @@ const validateAccessTokenRequest = (req, res) => {
   return success
 }
 
-const createToken = (name, email, expiresIn, state) => {
+const createToken = (name, email, expiresIn, state, scope) => {
   const code = 'C-' + randomstring.generate(3)
   const accesstoken = 'ACCT-' + randomstring.generate(6)
   const refreshtoken = 'REFT-' + randomstring.generate(6)
@@ -155,9 +175,13 @@ const createToken = (name, email, expiresIn, state) => {
   }
   const key = `Bearer ${accesstoken}`
   authHeader2personData[key] = {
-    email: email,
+    email,
     email_verified: true,
-    name: name
+    name
+  }
+  if (SCOPES.length > 0) {
+    authHeader2personData[key].scope = scope || getScope(email)
+    token.scope = authHeader2personData[key].scope
   }
   token2personData[idToken] = authHeader2personData[key]
   code2token[code] = token
@@ -184,8 +208,6 @@ const authRequestHandler = (req, res) => {
   res.end()
 }
 
-// start here
-// http://localhost:8282/o/oauth2/v2/auth?redirect_uri=http://localhost:8181/auth/login&client_id=dummy-client-id&response_type=code
 app.get(AUTH_REQUEST_PATH, authRequestHandler)
 
 app.get('/login-as', (req, res) => {
@@ -193,10 +215,24 @@ app.get('/login-as', (req, res) => {
     req.query.name,
     req.query.email,
     req.query.expiresIn,
-    req.session.client_state
+    req.session.client_state,
+    req.query.scope
   )
   let location = `${req.session.redirect_uri}?code=${code}`
   if (req.session.client_state) location += `&state=${req.session.client_state}`
+  console.log('Redirecting to', location)
+  console.log(
+    'Retrieve Auth Token by post',
+    ACCESS_TOKEN_REQUEST_PATH,
+    'with code',
+    code,
+    'client_id',
+    EXPECTED_CLIENT_ID,
+    'client_secret',
+    EXPECTED_CLIENT_SECRET,
+    'grant_type authorization_code',
+    'with header "Content-Type: application/x-www-form-urlencoded"'
+  )
   res.writeHead(307, { Location: location })
   res.end()
 })
@@ -214,10 +250,10 @@ app.post(ACCESS_TOKEN_REQUEST_PATH, (req, res) => {
 })
 
 app.get(USERINFO_REQUEST_URL, (req, res) => {
-  const tokenInfo = authHeader2personData[req.headers['authorization']]
-  if (tokenInfo !== undefined) {
-    console.log('userinfo response', tokenInfo)
-    res.send(tokenInfo)
+  const userInfo = authHeader2personData[req.headers['authorization']]
+  if (userInfo !== undefined) {
+    console.log('userinfo response', userInfo)
+    res.send(userInfo)
   } else {
     res.status(404)
   }
@@ -252,5 +288,7 @@ module.exports = {
   AUTH_REQUEST_PATH,
   ACCESS_TOKEN_REQUEST_PATH,
   PERMITTED_REDIRECT_URLS,
-  permittedRedirectURLs
+  permittedRedirectURLs,
+  SCOPES,
+  MATCH_SCOPE
 }

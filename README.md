@@ -41,9 +41,10 @@ List of environment variables:
 |`AUTH_REQUEST_PATH`|`/o/oauth2/v2/auth`|The HTTP path of the OAuth2 [authorization endpoint](https://tools.ietf.org/html/rfc6749#section-3.1) which the fake server listens on|
 |`ACCESS_TOKEN_REQUEST_PATH`|`/oauth2/v4/token`|The HTTP path of the [access token request](https://tools.ietf.org/html/rfc6749#section-4.1.3) which the fake server listens on|
 |`PERMITTED_REDIRECT_URLS`|`http://localhost:8181/auth/login`|comma-separated list of permitted [redirection endpoints](https://tools.ietf.org/html/rfc6749#section-3.1.2)|
-|`USERINFO_REQUEST_URL`|`'/oauth2/v3/userinfo'`|   |
-|`TOKENINFO_REQUEST_URL`|`'/oauth2/v3/tokeninfo'`|   |
-
+|`USERINFO_REQUEST_URL`|`'/oauth2/v3/userinfo'`| The url to retrieve user info from. |
+|`TOKENINFO_REQUEST_URL`|`'/oauth2/v3/tokeninfo'`| The url to retrieve token information from.  |
+|`SCOPES`| | A comma-separated list of scopes that can be returned. The first scope will be the default scope |
+|`MATCH_SCOPE`| | Email fragments and their associated scopes.  E.g. `"MATCH_SCOPE" : "@admin:admin"` will tell the oAuth server to give anyone with email address `*@admin*` the scope `'admin'` |
 
 ## Contributing
 
