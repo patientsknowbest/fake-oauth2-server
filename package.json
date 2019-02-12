@@ -4,12 +4,14 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "jasmine"
+    "test": "jasmine",
+    "start": "node server.js"
   },
   "author": "Bence Eros <ebence88@gmail.com>",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.17.1",
+    "dotenv": "^6.2.0",
     "express": "^4.15.2",
     "express-session": "^1.15.2",
     "morgan": "^1.8.1",

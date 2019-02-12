@@ -1,7 +1,7 @@
 /**
  * Created by erosb on 2017.04.26..
  */
-
+require('dotenv').config();
 const PORT = process.env.PORT || 8282;
 
 const app = require("./app");
