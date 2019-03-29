@@ -175,12 +175,15 @@ app.get(AUTH_REQUEST_PATH, authRequestHandler);
 
 app.get("/login-as", (req, res) => {
   const code = createToken(req.query.name, req.query.email, req.query.expires_in, req.session.client_state);
-  var location = req.session.redirect_uri + "?code=" + code;
-  if (req.session.client_state) {
-    location += "&state=" + req.session.client_state;
+  if (req.session.redirect_uri) {
+    let redirectUri = req.session.redirect_uri;
+    let location = `${redirectUri}${redirectUri.includes('?') ? '&' : '?'}code=${code}`;
+    if (req.session.client_state) {
+      location += "&state=" + req.session.client_state;
+    }
+    res.writeHead(307, {"Location": location});
+    res.end();
   }
-  res.writeHead(307, {"Location": location});
-  res.end();
 });
 
 app.post(ACCESS_TOKEN_REQUEST_PATH, (req, res) => {
