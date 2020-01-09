@@ -106,6 +106,10 @@ function validateAccessTokenRequest(req, res) {
       success = false;
       msg = "invalid refresh token";
     }
+    else if(!validateTokenExpiration(personData.date_of_creation, personData.refresh_token_expires_in)) {
+      success = false;
+      msg = "this token is already expired";
+    }
   }
   // if (!validateClientId(req.query.client_id, res)) {
   //   success = false;
@@ -121,10 +125,10 @@ function validateAccessTokenRequest(req, res) {
     success = false;
     msg = errorMsg("client_secret", EXPECTED_CLIENT_SECRET, req.body.client_secret);
   }
-  if (req.session.redirect_uri !== req.body.redirect_uri) {
-    success = false;
-    msg = errorMsg("redirect_uri", req.session.redirect_uri, req.body.redirect_uri);
-  }
+  // if (req.session.redirect_uri !== req.body.redirect_uri) {
+  //   success = false;
+  //   msg = errorMsg("redirect_uri", req.session.redirect_uri, req.body.redirect_uri);
+  // }
   if (!success) {
     const params = {};
     if (msg) {
@@ -135,29 +139,48 @@ function validateAccessTokenRequest(req, res) {
   return success;
 }
 
-function createToken(name, email, expires_in, client_state) {
+function validateTokenExpiration(date_of_creation, expires_in) {
+  let success = true;
+  const expiration_date = Number(date_of_creation) + Number(expires_in);
+  const now = Date.now()/1000 | 0;
+  if(now > expiration_date) {
+    success = false;
+  }
+
+  return success;
+}
+
+function createToken(name, email, expires_in, refresh_token_expires_in, client_state) {
   const code = "C-" + randomstring.generate(3);
   const accesstoken = "ACCT-" + randomstring.generate(6);
   const refreshtoken = "REFT-" + randomstring.generate(6);
   const id_token = "IDT-" + randomstring.generate(6);
+  const date_of_creation = Date.now()/1000 | 0;
+  // const expiration_date = Number(date_of_creation) + Number(expires_in);
+  // const refresh_token_expiration_date = Number(date_of_creation) + Number(refresh_token_expires_in);
   const token = {
     access_token: accesstoken,
     expires_in: expires_in,
     refresh_token: refreshtoken,
     id_token: id_token,
     state: client_state,
+    date_of_creation: date_of_creation,
     token_type: "Bearer"
   };
   id_token2personData[id_token] = authHeader2personData["Bearer " + accesstoken] = {
     email: email,
     email_verified: true,
-    name: name
+    name: name,
+    expires_in: expires_in,
+    date_of_creation: date_of_creation
   };
   code2token[code] = token;
   refresh2personData[refreshtoken] = {
     name: name,
     email: email,
-    expires_in: expires_in
+    expires_in: expires_in,
+    refresh_token_expires_in: refresh_token_expires_in,
+    date_of_creation: date_of_creation
   };
   return code;
 }
@@ -187,7 +210,7 @@ function authRequestHandler(req, res) {
 app.get(AUTH_REQUEST_PATH, authRequestHandler);
 
 app.get("/login-as", (req, res) => {
-  const code = createToken(req.query.name, req.query.email, req.query.expires_in, req.session.client_state);
+  const code = createToken(req.query.name, req.query.email, req.query.expires_in, req.query.refresh_token_expires_in, req.session.client_state);
   if (req.session.redirect_uri) {
     let redirectUri = req.session.redirect_uri;
     let location = `${redirectUri}${redirectUri.includes('?') ? '&' : '?'}code=${code}`;
@@ -205,7 +228,7 @@ app.post(ACCESS_TOKEN_REQUEST_PATH, (req, res) => {
     if (req.body.grant_type === "refresh_token") {
       const refresh = req.body.refresh_token;
       const personData = refresh2personData[refresh];
-      code = createToken(personData.name, personData.email, personData.expires_in, null);
+      code = createToken(personData.name, personData.email, personData.expires_in, personData.refresh_token_expires_in, null);
       delete refresh2personData[refresh];
     } else {
       code = req.body.code;
@@ -223,7 +246,13 @@ app.get(USERINFO_REQUEST_URL, (req, res) => {
   const token_info = authHeader2personData[req.headers["authorization"]];
   if (token_info !== undefined) {
     console.log("userinfo response", token_info);
-    res.send(token_info);
+    if(!validateTokenExpiration(token_info.date_of_creation, token_info.expires_in)) {
+      res.status(401);
+      res.send("this token is already expired");
+    }
+    else{
+      res.send(token_info);
+    }
   } else {
     res.status(404);
   }
