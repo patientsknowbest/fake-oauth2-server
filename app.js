@@ -156,8 +156,7 @@ function createToken(name, email, expires_in, refresh_token_expires_in, client_s
   const refreshtoken = "REFT-" + randomstring.generate(6);
   const id_token = "IDT-" + randomstring.generate(6);
   const date_of_creation = Date.now()/1000 | 0;
-  // const expiration_date = Number(date_of_creation) + Number(expires_in);
-  // const refresh_token_expiration_date = Number(date_of_creation) + Number(refresh_token_expires_in);
+  
   const token = {
     access_token: accesstoken,
     expires_in: expires_in,
