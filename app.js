@@ -125,10 +125,10 @@ function validateAccessTokenRequest(req, res) {
     success = false;
     msg = errorMsg("client_secret", EXPECTED_CLIENT_SECRET, req.body.client_secret);
   }
-  // if (req.session.redirect_uri !== req.body.redirect_uri) {
-  //   success = false;
-  //   msg = errorMsg("redirect_uri", req.session.redirect_uri, req.body.redirect_uri);
-  // }
+  if (req.session.redirect_uri !== req.body.redirect_uri) {
+    success = false;
+    msg = errorMsg("redirect_uri", req.session.redirect_uri, req.body.redirect_uri);
+  }
   if (!success) {
     const params = {};
     if (msg) {
