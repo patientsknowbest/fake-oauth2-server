@@ -14,7 +14,7 @@
     "dotenv": "^6.2.0",
     "express": "^4.15.2",
     "express-session": "^1.15.2",
-    "morgan": "^1.8.1",
+    "morgan": "^1.9.1",
     "randomstring": "^1.1.5",
     "underscore": "^1.8.3"
   },
